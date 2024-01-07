@@ -1,4 +1,5 @@
 const express = require("express");
+//const secp = require('@noble/secp256k1');
 const app = express();
 const cors = require("cors");
 const port = 3042;
@@ -7,9 +8,9 @@ app.use(cors());
 app.use(express.json());
 
 const balances = {
-  "0x1": 100,
-  "0x2": 50,
-  "0x3": 75,
+  "1ba78a7c37f945c31aa5e11d9edb27ce931d5e33": 100,
+  "8646863f9362148049bfa34cfe309a9bc87e9dbe": 50,
+  "a4f5e60367e9cb6389dc64de470cf1c08049eff5": 75,
 };
 
 app.get("/balance/:address", (req, res) => {
@@ -19,8 +20,13 @@ app.get("/balance/:address", (req, res) => {
 });
 
 app.post("/send", (req, res) => {
-  const { sender, recipient, amount } = req.body;
-
+  // Get a signature from client-side application
+  // Recover the public address from the signature
+  
+  const { sender, signature, hash, recipient, amount } = req.body;
+  //console.log(signature, hash);
+  //const pubKey = secp.recoverPublicKey(hash, signature, signature.recovery);
+  //console.log(pubKey);
   setInitialBalance(sender);
   setInitialBalance(recipient);
 
