@@ -9,12 +9,13 @@ function Wallet({ address, setAddress, balance, setBalance, privateKey, setPriva
     const privateKey = evt.target.value;
     setPrivateKey(privateKey);
 
-    const messageHash = "a33321f98e4ff1c283c76998f14f57447545d339b3db534c6d886decb4209f28";
-    const signature = secp256k1.sign(messageHash, privateKey);
+    // const messageHash = "a33321f98e4ff1c283c76998f14f57447545d339b3db534c6d886decb4209f28";
+    // const signature = secp256k1.sign(messageHash, privateKey);
   
     //console.log(privateKey);
 
     const publicKey = secp256k1.getPublicKey(privateKey);
+    console.log(publicKey);
     const tempAddr = publicKey.slice(1, 65);
     const hash = keccak256(tempAddr);
     const address = toHex(hash.slice(12, 32));
@@ -46,11 +47,11 @@ function Wallet({ address, setAddress, balance, setBalance, privateKey, setPriva
         Address: {address}
       </div>
 
-      <div>
+      {/* <div>
        <p>r component: {signature.r ? signature.r.toString() : 'N/A'}</p>
        <p>s component: {signature.s ? signature.s.toString() : 'N/A'}</p>
        <p>Recovery bit: {signature.recovery}</p>   
-      </div>
+      </div> */}
 
       <div className="balance">Balance: {balance}</div>
     </div>

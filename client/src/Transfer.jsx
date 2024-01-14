@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import server from "./server";
 
 import { secp256k1 } from "ethereum-cryptography/secp256k1";
@@ -14,28 +14,27 @@ function Transfer({ address, setBalance, privateKey, setSignature }) {
   async function transfer(evt) {
     evt.preventDefault();
 
-    const transaction = {
-      sender: address,
-      amount: parseInt(sendAmount),
-      recipient,
-    };
-  
-    // Step 1: Convert the object to a JSON string
-    const jsonString = JSON.stringify(transaction);
+    const msg = `${address} + ${sendAmount} + ${recipient} `;
     // Step 2: Hash the JSON string using Keccak256
-    const hashedValue = keccak256(utf8ToBytes(jsonString));
+    const hashedValue = toHex(keccak256(utf8ToBytes(msg)));
+
     // Step 3: Hash signature
     const signature = secp256k1.sign(hashedValue, privateKey);
     setSignature(signature);
-    console.log('Signature:', signature);
+
+    const signatureSerialized = {
+      r: signature.r.toString(),
+      s: signature.s.toString(),
+      recovery: signature.recovery,
+    }
 
     try {
       const {
         data: { balance },
       } = await server.post(`send`, {
         sender: address,
-        signature: signature ? signature.toString() : 'N/A', // issue here
-        hash: hashedValue,
+        signature: signatureSerialized,
+        hashedValue,
         amount: parseInt(sendAmount),
         recipient,
       });

@@ -1,6 +1,7 @@
 const express = require("express");
 const {secp256k1} =require("ethereum-cryptography/secp256k1");
-const {toHex, utf8ToBytes} =require("ethereum-cryptography/utils")
+const {toHex, hexToBytes} =require("ethereum-cryptography/utils")
+const {keccak256} =require("ethereum-cryptography/keccak")
 
 const app = express();
 const cors = require("cors");
@@ -25,35 +26,32 @@ app.post("/send", (req, res) => {
   // Get a signature from client-side application
   // Recover the public address from the signature
   
-  const { sender, signature, hashedValue, recipient, amount } = req.body;
+  const { sender, signature: signatureSerialized, hashedValue, recipient, amount } = req.body;
 
-  // Convert object to JSON
-  const jsonString = JSON.stringify(hashedValue);
+  // Create a new Signature instance from the serialized signature
+  const { r, s , recovery } = signatureSerialized;
 
-  // Convert JSON string to hex
-  const hexString = Buffer.from(jsonString, 'utf-8').toString('hex');
-
-  //console.log('Object as Hex:', hexString);
-
-  const signatureRecovered = new secp256k1.Signature(
-    BigInt(signature.r),
-    BigInt(signature.s)
-  ).addRecoveryBit(signature.recovery)
+  const signatureRecovered = new secp256k1.Signature(BigInt(r), BigInt(s), recovery);
   
-  const pubKey = signatureRecovered.recoverPublicKey(hexString);
-  
+  const recoverPublicKey = signatureRecovered.recoverPublicKey(hashedValue);
+  console.log(recoverPublicKey);
+   
   // Compress the public key
-  const publicKey = pubKey.toHex(true);
+  const publicKey = recoverPublicKey.toHex(true);
+  
+  console.log("public key:" + publicKey);
 
-  //const tempAddr = publicKey.slice(1, 65);
-  //const hash = keccak256(tempAddr);
-  //const address = toHex(hash.slice(12, 32));
-
-  //const address = toHex(keccak256(hexToBytes(publicKey.slice(2))).slice(-20));
-  //console.log("address:" + address);
+  const address = toHex(keccak256(hexToBytes(publicKey.slice(2))).slice(-20));
+  console.log("address:" + address);
 
   setInitialBalance(sender);
   setInitialBalance(recipient);
+
+  //Check if the recover address matches the sender's address
+  if (address !== sender) {
+    res.status(400).send({ message: "Invalid signature!" });
+    return;
+  }
 
   if (balances[sender] < amount) {
     res.status(400).send({ message: "Not enough funds!" });
